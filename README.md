@@ -50,7 +50,7 @@ tests/
 ### 1. Clone Repo
 
 ```bash
-git clone <your-repo>
+git clone https://github.com/sauravkr21/mf_analytics.git
 cd mf-analytics
 ```
 
