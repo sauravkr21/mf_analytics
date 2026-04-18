@@ -15,6 +15,19 @@ type Limiter struct {
 	lastMin   time.Time
 }
 
+// ONLY FOR TESTING
+func (l *Limiter) SetHourCount(n int) {
+	l.hourCount = n
+}
+
+func (l *Limiter) SetMinCount(n int) {
+	l.minCount = n
+}
+
+func (l *Limiter) SetLastMin(t time.Time) {
+	l.lastMin = t
+}
+
 func NewLimiter() *Limiter {
 	return &Limiter{
 		sec:     time.Tick(time.Second / 2),
