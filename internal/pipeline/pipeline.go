@@ -17,21 +17,23 @@ var windows = map[string]int{
 }
 
 func Process(code string, rl *rate.Limiter) {
-	// ✅ Rate limiting
-	rl.Wait()
+	// Rate limiting
+	if err := rl.Wait(); err != nil {
+	   return
+    }
 
 	res, err := fetcher.Fetch(code)
 	if err != nil {
 		return
 	}
 
-	// ✅ STEP 1: Get last stored date (incremental sync)
+	// STEP 1: Get last stored date (incremental sync)
 	var lastDate string
 	db.DB.QueryRow(`
 	SELECT MAX(date) FROM nav_data WHERE code=?`,
 		code).Scan(&lastDate)
 
-	// ✅ STEP 2: Insert only new NAV data
+	// STEP 2: Insert only new NAV data
 	for _, d := range res.Data {
 		if lastDate != "" && d.Date <= lastDate {
 			continue // skip old data
@@ -44,7 +46,7 @@ func Process(code string, rl *rate.Limiter) {
 			code, d.Date, v)
 	}
 
-	// ✅ STEP 3: Fetch full ordered NAV data (for analytics)
+	// STEP 3: Fetch full ordered NAV data (for analytics)
 	rows, _ := db.DB.Query(`
 	SELECT nav FROM nav_data WHERE code=? ORDER BY date ASC`,
 		code)
@@ -56,7 +58,7 @@ func Process(code string, rl *rate.Limiter) {
 		navs = append(navs, v)
 	}
 
-	// ✅ STEP 4: Store fund metadata (state persistence)
+	// STEP 4: Store fund metadata (state persistence)
 	db.DB.Exec(`
 	INSERT OR IGNORE INTO funds (code, name, amc, category)
 	VALUES (?, ?, ?, ?)`,
@@ -66,7 +68,7 @@ func Process(code string, rl *rate.Limiter) {
 		extractCategory(res.Meta.SchemeName),
 	)
 
-	// ✅ STEP 5: Compute analytics (precompute)
+	// STEP 5: Compute analytics (precompute)
 	for win, days := range windows {
 		if len(navs) < days {
 			continue
